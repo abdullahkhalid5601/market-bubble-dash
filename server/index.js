@@ -11,6 +11,8 @@ import * as replay from './adapters/replay.js';
 import { createRecorder } from './record.js';
 import { getTwitchStatus, getTwitchStream, twitchApiConfigured } from './twitchApi.js';
 import { getKickStatus, kickApiConfigured } from './kickApi.js';
+import { getNews, newsConfigured } from './newsApi.js';
+import { getMarketData, stocksConfigured } from './marketApi.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.GATEWAY_PORT || 8787;
@@ -52,7 +54,7 @@ const sourcesMeta = sources.map((s) => ({ id: sourceId(s), host: s.host, platfor
 const statuses = {};
 function emitStatus(id) {
   const st = statuses[id] || {};
-  const frame = JSON.stringify({ type: 'sourceStatus', id, state: st.state || '', detail: st.detail || '', viewers: st.viewers, uptime: st.uptime, videoId: st.videoId });
+  const frame = JSON.stringify({ type: 'sourceStatus', id, state: st.state || '', detail: st.detail || '', viewers: st.viewers, uptime: st.uptime, videoId: st.videoId, title: st.title, lastViews: st.lastViews });
   for (const c of clients) if (c.readyState === c.OPEN) c.send(frame);
 }
 function setStatus(id, state, detail) {
@@ -66,6 +68,8 @@ function setViewers(id, viewers, uptime) {
 
 // Mutable mock config — the Tweaks panel steers this via control messages.
 const mockCfg = { cadenceMs: 1100, biasHost: null, biasUntil: 0 };
+let latestNews = []; // most recent X posts for the News page
+let latestMarket = null; // live market data for the Markets page
 
 function broadcastRaw(obj) {
   const frame = JSON.stringify(obj);
@@ -77,6 +81,8 @@ wss.on('connection', (socket) => {
   socket.send(JSON.stringify({ type: 'status', mode: MODE, sources: sourcesMeta, hosts, platforms }));
   for (const [id, st] of Object.entries(statuses)) socket.send(JSON.stringify({ type: 'sourceStatus', id, ...st }));
   for (const msg of history) socket.send(JSON.stringify({ type: 'message', data: msg }));
+  if (latestNews.length) socket.send(JSON.stringify({ type: 'news', items: latestNews }));
+  if (latestMarket) socket.send(JSON.stringify({ type: 'market', data: latestMarket }));
 
   socket.on('message', (raw) => {
     let m;
@@ -163,7 +169,23 @@ function bootMode(mode) {
   } else {
     for (const s of sources) setStatus(sourceId(s), 'connected', 'mock');
     handles.push(mock.start({ sources, onMessage: broadcast, cfg: mockCfg }));
+    startDemoViewers();
   }
+}
+
+// Demo viewer counts for mock mode — so the stats rail + "watching" readout
+// look alive while recording a demo. Gentle random-walk per platform.
+const demoBase = { 'banks:twitch': 11800, 'ansem:kick': 7200 };
+function startDemoViewers() {
+  const tick = () => {
+    for (const [id, base] of Object.entries(demoBase)) {
+      const cur = statuses[id]?.viewers ?? base;
+      const next = Math.max(base * 0.7, Math.round(cur + (Math.random() - 0.48) * 220));
+      setViewers(id, next);
+    }
+  };
+  tick();
+  viewerTimers.push(setInterval(tick, 3000));
 }
 
 bootMode(MODE);
@@ -177,10 +199,12 @@ async function resolveStreams() {
     const id = sourceId(s);
     if (s.platform === 'twitch' && twitchApiConfigured()) {
       const r = await getTwitchStream(s.handle);
-      if (r) { statuses[id] = { ...statuses[id], state: r.live ? 'live' : 'idle', viewers: r.viewers, videoId: r.videoId }; emitStatus(id); }
+      // Real viewers only override when actually live; otherwise keep whatever's
+      // there (e.g. mock-mode demo viewers) so the demo readout stays populated.
+      if (r) { statuses[id] = { ...statuses[id], state: r.live ? 'live' : 'idle', viewers: r.live ? r.viewers : (statuses[id]?.viewers ?? r.viewers), videoId: r.videoId, title: r.title, lastViews: r.lastViews }; emitStatus(id); }
     } else if (s.platform === 'kick' && kickApiConfigured()) {
       const r = await getKickStatus(s.slug);
-      if (r) { statuses[id] = { ...statuses[id], state: r.live ? 'live' : 'idle', viewers: r.viewers }; emitStatus(id); }
+      if (r) { statuses[id] = { ...statuses[id], state: r.live ? 'live' : 'idle', viewers: r.live ? r.viewers : (statuses[id]?.viewers ?? r.viewers) }; emitStatus(id); }
     }
   }
 }
@@ -192,6 +216,27 @@ if (twitchApiConfigured() || kickApiConfigured()) {
   console.log('[stream] no app creds — window uses channel embed (live when live); add creds for VOD + real viewers');
 }
 
+// News feed — Market Bubble's own content API (real tweets + media + clips).
+// Polled every 60s so the dashboard reflects new posts within minutes.
+let newsTimer = null;
+async function pollNews() {
+  const items = await getNews();
+  if (items.length) { latestNews = items; broadcastRaw({ type: 'news', items }); }
+}
+pollNews();
+newsTimer = setInterval(pollNews, 60000);
+console.log('[news] Market Bubble content feed active (marketbubble.vercel.app)');
+
+// Markets — real crypto + Polymarket always; stocks/indices need TWELVEDATA_KEY.
+let marketTimer = null;
+async function pollMarket() {
+  const data = await getMarketData();
+  if (data) { latestMarket = data; broadcastRaw({ type: 'market', data }); }
+}
+pollMarket();
+marketTimer = setInterval(pollMarket, 60000);
+console.log(`[market] live · crypto + polymarket real${stocksConfigured() ? ' + stocks (Twelve Data)' : ' · stocks need TWELVEDATA_KEY'}`);
+
 server.listen(PORT, () => {
   console.log(`Market Bubble gateway · mode=${MODE} · http://localhost:${PORT} (ws: /ws)`);
 });
@@ -199,6 +244,8 @@ server.listen(PORT, () => {
 function shutdown() {
   teardown();
   clearInterval(streamTimer);
+  clearInterval(newsTimer);
+  clearInterval(marketTimer);
   recorder?.close();
   process.exit(0);
 }

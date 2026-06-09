@@ -42,8 +42,10 @@ export async function getTwitchStatus(login) {
   }
 }
 
-// Resolve what to PLAY: live channel if live, else the latest archived VOD id.
-// Returns { live, viewers, videoId } | null.
+// Resolve what to PLAY and what to SAY: live channel + title if live, else the
+// latest archived VOD (its id, title and view count). Everything here is real
+// data from Helix — title drives the on-screen stream caption.
+// Returns { live, viewers, videoId, title, startedAt, lastViews } | null.
 export async function getTwitchStream(login) {
   if (!login) return null;
   try {
@@ -56,10 +58,13 @@ export async function getTwitchStream(login) {
     if (!user) return null;
     const s = await fetch(`https://api.twitch.tv/helix/streams?user_id=${user.id}`, { headers, signal: AbortSignal.timeout(8000) });
     const stream = s.ok ? (await s.json()).data?.[0] : null;
-    if (stream) return { live: true, viewers: stream.viewer_count || 0, videoId: null };
+    // Always look up the latest archive too (its title is the "last stream").
     const v = await fetch(`https://api.twitch.tv/helix/videos?user_id=${user.id}&type=archive&first=1`, { headers, signal: AbortSignal.timeout(8000) });
     const vod = v.ok ? (await v.json()).data?.[0] : null;
-    return { live: false, viewers: 0, videoId: vod?.id || null };
+    if (stream) {
+      return { live: true, viewers: stream.viewer_count || 0, videoId: null, title: stream.title || '', startedAt: stream.started_at || null, lastViews: vod?.view_count || 0 };
+    }
+    return { live: false, viewers: 0, videoId: vod?.id || null, title: vod?.title || '', startedAt: vod?.published_at || null, lastViews: vod?.view_count || 0 };
   } catch {
     return null;
   }

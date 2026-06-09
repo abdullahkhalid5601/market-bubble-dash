@@ -87,7 +87,7 @@ export function StatsPanel({ tab, onTab, data }) {
   return (
     <div className="stats-col">
       <StatsTabs tab={tab} onTab={onTab} />
-      <div className="stat-grid">
+      <div className="stat-grid t-pop" key={tab}>
         <StatBlock label="Total viewers" value={data.viewers} delta={d.viewers} deltaTone={deltaTone(d.viewers)} hoverable popRows={data.viewerBreak} />
         <StatBlock label="Active chatters" value={data.chatters} delta={d.chatters} deltaTone={deltaTone(d.chatters)} />
         <StatBlock label="Total messages" value={data.messages} delta={d.messages} />

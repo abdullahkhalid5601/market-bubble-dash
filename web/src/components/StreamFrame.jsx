@@ -12,11 +12,15 @@ function twitchSrc({ live, videoId }) {
 
 // The live window — real embedded player, with an optional transparent chat
 // overlay floating on top of the video (toggle, top-right).
-export default function StreamFrame({ title, watch = 'banks', live = false, videoId = null, messages = [] }) {
+export default function StreamFrame({ title, streamTitle = '', lastViews = 0, watch = 'banks', live = false, videoId = null, messages = [] }) {
   const isBanks = watch === 'banks';
   const [showChat, setShowChat] = useState(false);
   const src = isBanks ? twitchSrc({ live, videoId }) : `https://player.kick.com/ansem?autoplay=true&muted=true`;
   const overlay = messages.slice(-10);
+  // Real title from Twitch: current stream when live, latest VOD when offline.
+  const caption = (streamTitle && streamTitle.trim()) || title;
+  const hasTitle = Boolean(caption && caption.trim());
+  const fmtViews = (n) => (n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(1)}K` : `${n}`);
 
   return (
     <div className="stream-col">
@@ -28,6 +32,9 @@ export default function StreamFrame({ title, watch = 'banks', live = false, vide
           allowFullScreen
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }}
         />
+        <span className={`stream-status ${live ? 'on' : 'off'}`}>
+          <span className="ss-dot" />{live ? 'LIVE' : 'OFFLINE'}
+        </span>
 
         {showChat ? (
           <div className="stream-chat-overlay" aria-hidden="true">
@@ -51,9 +58,17 @@ export default function StreamFrame({ title, watch = 'banks', live = false, vide
       </div>
 
       <p className="stream-caption">
-        <span className="cap-title">“{title}”</span>
-        <span className="cap-sep">·</span>
-        <span className="cap-host">with {isBanks ? 'FaZeBanks' : 'Ansem'}</span>
+        {hasTitle ? (
+          <>
+            <span className={`cap-flag ${live ? 'live' : 'last'}`}>{live ? 'LIVE' : 'LAST STREAM'}</span>
+            <span className="cap-title">“{caption}”</span>
+            <span className="cap-sep">·</span>
+            <span className="cap-host">with {isBanks ? 'FaZeBanks' : 'Ansem'}</span>
+            {!live && lastViews ? <span className="cap-views">{fmtViews(lastViews)} views</span> : null}
+          </>
+        ) : (
+          <span className="cap-title cap-soon">The next livestream title will appear here when {isBanks ? 'FaZeBanks' : 'Ansem'} goes live</span>
+        )}
       </p>
     </div>
   );

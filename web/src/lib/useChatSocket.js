@@ -18,6 +18,8 @@ export function useChatSocket() {
   const [statuses, setStatuses] = useState({}); // sourceId -> { state, detail }
   // Running totals, never reset — drive the real stats panel.
   const [stats, setStats] = useState({ total: 0, platform: { twitch: 0, kick: 0, x: 0 }, host: { banks: 0, ansem: 0 }, hp: {} });
+  const [news, setNews] = useState([]);
+  const [market, setMarket] = useState(null);
   const wantRef = useRef(true);
   const sockRef = useRef(null);
   const retryRef = useRef(null);
@@ -45,10 +47,14 @@ export function useChatSocket() {
           setFeed([]);
           setStatuses({});
           setStats({ total: 0, platform: { twitch: 0, kick: 0, x: 0 }, host: { banks: 0, ansem: 0 }, hp: {} });
+        } else if (m.type === 'news') {
+          setNews(Array.isArray(m.items) ? m.items : []);
+        } else if (m.type === 'market') {
+          setMarket(m.data || null);
         } else if (m.type === 'sourceStatus') {
           setStatuses((prev) => ({
             ...prev,
-            [m.id]: { state: m.state, detail: m.detail, viewers: m.viewers, uptime: m.uptime, videoId: m.videoId },
+            [m.id]: { state: m.state, detail: m.detail, viewers: m.viewers, uptime: m.uptime, videoId: m.videoId, title: m.title, lastViews: m.lastViews },
           }));
         } else if (m.type === 'message') {
           const msg = { ...m.data, recvAt: Date.now() };
@@ -83,5 +89,5 @@ export function useChatSocket() {
     };
   }, []);
 
-  return { connected, mode, sources, feed, statuses, stats, send };
+  return { connected, mode, sources, feed, statuses, stats, news, market, send };
 }

@@ -1,14 +1,17 @@
 import Segmented from './Segmented.jsx';
 import MarketBubbleLogo from './MarketBubbleLogo.jsx';
 
-export default function Header({ dateText, mode, onMode, viewers, edition, onEdition }) {
+const NAV = [['home', 'Home'], ['markets', 'Markets'], ['news', 'Content']];
+
+export default function Header({ dateText, mode, onMode, viewers, edition, onEdition, page = 'home', onPage }) {
   return (
     <header className="header">
-      <div className="kicker">
-        <span className="line">Make Money</span>
-        <span className="line">Command Attention</span>
-        <span className="line">Leverage AI</span>
-      </div>
+      {/* Kicker is now the site nav — same serif small-caps */}
+      <nav className="kicker kicker-nav">
+        {NAV.map(([id, label]) => (
+          <button key={id} className={`line ${page === id ? 'active' : ''}`} onClick={() => onPage && onPage(id)}>{label}</button>
+        ))}
+      </nav>
 
       <div className="nameplate-wrap">
         <MarketBubbleLogo />

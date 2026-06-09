@@ -2,7 +2,7 @@
 const MB_LOGO_PATHS = {
   twitch: { vb: '0 0 24 24', d: ['M11.64 5.93h1.43v4.28h-1.43m3.93-4.28H17v4.28h-1.43M7 2L3.43 5.57v12.86h4.28V22l3.58-3.57h2.85L20.57 12V2m-1.43 9.29l-2.86 2.85h-2.85l-2.5 2.5v-2.5H7.71V3.43h11.43z'] },
   kick: { vb: '0 0 24 24', d: ['M3 3h5.5v7L13 3h6.5l-6 9 6 9H13l-4.5-7v7H3V3z'] },
-  x: { vb: '0 0 24 24', d: ['M17.53 3h3.2l-7 8 8.23 10h-6.44l-5.05-6.6L8.6 21H5.4l7.49-8.56L5 3h6.6l4.56 6.03L17.53 3zm-1.12 16.1h1.77L8.18 4.82H6.28l10.13 14.28z'] },
+  x: { vb: '0 0 24 24', d: ['M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z'] },
   mb: { vb: '0 0 24 24', d: ['M4 4h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H10l-5 4v-4H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z'] },
 };
 
@@ -32,12 +32,15 @@ export function PopoutIcon({ size = 15 }) {
 }
 export const ExpandIcon = FullscreenIcon;
 
-export function PolymarketLogo({ size = 14 }) {
+// Official Polymarket mark — outlined leaning rectangle split into two
+// triangles. Drawn with currentColor so it reads in both editions.
+export function PolymarketLogo({ size = 16 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 36 36" fill="currentColor" aria-hidden="true">
-      <path d="M4 3 L30 9.5 L30 14 L4 7.5 Z" />
-      <path d="M4 10.5 L30 17 L30 21.5 L4 15 Z" opacity="0.65" />
-      <path d="M4 18 L30 24.5 L30 33 L4 26.5 Z" />
+    <svg width={size} height={size} viewBox="0 0 40 36" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinejoin="round" strokeLinecap="round" aria-hidden="true">
+      <g transform="skewX(-7)" style={{ transformOrigin: '20px 18px' }}>
+        <path d="M11 4 H31 V32 H11 Z" />
+        <path d="M11 4 L31 18 L11 32" />
+      </g>
     </svg>
   );
 }

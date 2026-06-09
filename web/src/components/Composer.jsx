@@ -1,8 +1,17 @@
 import { useState } from 'react';
 
-// Lets a dashboard viewer comment into the shared live chat in real time.
-export default function Composer({ onSend, handle }) {
+// Comment into the shared live chat. Locked until the viewer signs in.
+export default function Composer({ onSend, user, onSignIn, onSignOut }) {
   const [text, setText] = useState('');
+
+  if (!user) {
+    return (
+      <button type="button" className="composer-signin" onClick={onSignIn}>
+        Sign in to join the chat
+      </button>
+    );
+  }
+
   const submit = (e) => {
     e.preventDefault();
     const t = text.trim();
@@ -10,9 +19,10 @@ export default function Composer({ onSend, handle }) {
     onSend(t);
     setText('');
   };
+
   return (
     <form className="composer" onSubmit={submit}>
-      <span className="composer-handle">{handle}</span>
+      <button type="button" className="composer-handle composer-handle-btn" onClick={onSignOut} title="Sign out">{user}</button>
       <input
         className="composer-input"
         value={text}

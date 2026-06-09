@@ -5,3 +5,4 @@ dist
 *.log
 recordings/*.jsonl
 !recordings/demo.jsonl
+web/.env

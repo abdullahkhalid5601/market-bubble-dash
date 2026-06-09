@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useChatSocket } from './lib/useChatSocket.js';
 import { useStats, totalViewers } from './lib/useStats.js';
 import Header from './components/Header.jsx';
@@ -7,7 +7,14 @@ import StreamFrame from './components/StreamFrame.jsx';
 import { StatsPanel, StatsStrip } from './components/StatsPanel.jsx';
 import Footer from './components/Footer.jsx';
 import MarketBubbleLogo from './components/MarketBubbleLogo.jsx';
+import SignIn from './components/SignIn.jsx';
+import { NewsGridSkeleton, MarketsSkeleton } from './components/Skeletons.jsx';
 import { FullscreenIcon, PopoutIcon } from './components/logos.jsx';
+
+// Markets + Content are split out so the home page ships a smaller, faster
+// initial bundle (TradingView widgets + the clip player load on demand).
+const MarketsPage = lazy(() => import('./components/MarketsPage.jsx'));
+const NewsPage = lazy(() => import('./components/NewsPage.jsx'));
 
 const STREAM_TITLE = 'Let’s Talk About View Botting';
 const IS_POPOUT = typeof location !== 'undefined' && location.hash === '#popout';
@@ -112,12 +119,17 @@ function OverlayApp() {
 }
 
 function MainApp() {
-  const { feed, stats, statuses, send } = useChatSocket();
+  const { feed, stats, statuses, news, market, send } = useChatSocket();
   const [tab, setTab] = useState('both');
   const [mode, setMode] = useState('unified');
   const [edition, setEdition] = useState('evening');
-  const [handle] = useState(() => 'guest_' + Math.floor(1000 + Math.random() * 9000));
-  const sendChat = (text) => send({ type: 'chat', user: handle, text });
+  const [page, setPage] = useState('home');
+  const [user, setUser] = useState(null);
+  const [signInOpen, setSignInOpen] = useState(false);
+  const sendChat = (text) => {
+    if (!user) { setSignInOpen(true); return; }
+    send({ type: 'chat', user, text });
+  };
   const [ctx, setCtx] = useState(null);
   const [fs, setFs] = useState(false);
   const [viewers, setViewers] = useState(() => totalViewers({}));
@@ -153,12 +165,18 @@ function MainApp() {
     <>
       <div className="stage">
         <div className="app">
-          <Header dateText={dateText} mode={mode} onMode={setMode} viewers={viewers} edition={edition} onEdition={setEdition} />
+          <Header dateText={dateText} mode={mode} onMode={setMode} viewers={viewers} edition={edition} onEdition={setEdition} page={page} onPage={setPage} />
 
+          <div className="page-stage" key={page}>
+          {page !== 'home' ? (
+            <Suspense fallback={page === 'markets' ? <MarketsSkeleton /> : <NewsGridSkeleton />}>
+              {page === 'markets' ? <MarketsPage data={market} news={news} edition={edition} /> : <NewsPage items={news} />}
+            </Suspense>
+          ) : (
           <div className="front" data-mode={mode}>
             <div className="zone zone-left">
               <div className="chat-layer chat-all">
-                <ChatColumn title="The Chat" messages={feed} msgsPerMin={allRate} onContextMenu={openCtx} onExpand={goFs} onSend={sendChat} handle={handle} />
+                <ChatColumn title="The Chat" messages={feed} msgsPerMin={allRate} onContextMenu={openCtx} onExpand={goFs} onSend={sendChat} user={user} onSignIn={() => setSignInOpen(true)} onSignOut={() => setUser(null)} />
               </div>
               <div className="chat-layer chat-banks">
                 <ChatColumn title="The Banks Desk" accent="banks" showHost={false} messages={banksMsgs} msgsPerMin={banksRate} onContextMenu={openCtx} onExpand={goFs} />
@@ -166,7 +184,7 @@ function MainApp() {
             </div>
 
             <div className="zone zone-center">
-              <StreamFrame title={STREAM_TITLE} watch="banks" live={statuses['banks:twitch']?.state === 'live'} videoId={statuses['banks:twitch']?.videoId} messages={feed} />
+              <StreamFrame title={STREAM_TITLE} streamTitle={statuses['banks:twitch']?.title} lastViews={statuses['banks:twitch']?.lastViews} watch="banks" live={statuses['banks:twitch']?.state === 'live'} videoId={statuses['banks:twitch']?.videoId} messages={feed} />
               <div className="stats-dock"><StatsStrip data={data} /></div>
             </div>
 
@@ -175,11 +193,14 @@ function MainApp() {
               <div className="desk-ansem"><ChatColumn title="The Ansem Desk" accent="ansem" showHost={false} messages={ansemMsgs} msgsPerMin={ansemRate} onContextMenu={openCtx} /></div>
             </div>
           </div>
+          )}
+          </div>
 
           <Footer />
         </div>
       </div>
 
+      {signInOpen ? <SignIn onClose={() => setSignInOpen(false)} onSignIn={(name) => { setUser(name); setSignInOpen(false); }} /> : null}
       {ctx ? <ChatContextMenu x={ctx.x} y={ctx.y} onFullscreen={goFs} onPopout={popOut} onOverlay={openOverlay} onClose={() => setCtx(null)} /> : null}
       {fs ? <FullscreenChat messages={feed} msgsPerMin={allRate} tab={tab} onTab={setTab} data={data} onClose={() => setFs(false)} /> : null}
     </>
