@@ -3,35 +3,52 @@ import { userColor, hostColor, hostName } from '../data/mb.js';
 
 const PARENT = typeof location !== 'undefined' ? location.hostname : 'localhost';
 
-// Build the player URL: live channel when live, latest VOD (videoId) when the
-// gateway resolved one (offline), else the channel embed.
+// Build the Twitch player URL: live channel when live, latest VOD (videoId)
+// when the gateway resolved one, else the plain channel embed.
 function twitchSrc({ live, videoId }) {
   if (!live && videoId) return `https://player.twitch.tv/?video=v${String(videoId).replace(/^v/, '')}&parent=${PARENT}&autoplay=true&muted=true`;
   return `https://player.twitch.tv/?channel=fazebanks&parent=${PARENT}&autoplay=true&muted=true`;
 }
 
-// The live window — real embedded player, with an optional transparent chat
-// overlay floating on top of the video (toggle, top-right).
-export default function StreamFrame({ title, streamTitle = '', lastViews = 0, watch = 'banks', live = false, videoId = null, messages = [] }) {
+// The live window. Priority: LIVE stream → latest VOD → (bulletproof fallback)
+// the most recent Market Bubble clip, so it's never the empty Twitch offline
+// page. Optional transparent chat overlay floats on top.
+export default function StreamFrame({ title, streamTitle = '', lastViews = 0, watch = 'banks', live = false, videoId = null, clip = null, messages = [] }) {
   const isBanks = watch === 'banks';
   const [showChat, setShowChat] = useState(false);
-  const src = isBanks ? twitchSrc({ live, videoId }) : `https://player.kick.com/ansem?autoplay=true&muted=true`;
   const overlay = messages.slice(-10);
-  // Real title from Twitch: current stream when live, latest VOD when offline.
-  const caption = (streamTitle && streamTitle.trim()) || title;
-  const hasTitle = Boolean(caption && caption.trim());
+
+  // Show the clip only when there's no live stream and no resolvable VOD (e.g.
+  // Twitch creds missing or no archive) — guarantees something always plays.
+  const useClip = isBanks && !live && !videoId && Boolean(clip?.video);
+  const src = isBanks ? twitchSrc({ live, videoId }) : `https://player.kick.com/ansem?autoplay=true&muted=true`;
+
   const fmtViews = (n) => (n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(1)}K` : `${n}`);
+  const caption = useClip ? (clip.title || title) : ((streamTitle && streamTitle.trim()) || title);
+  const hasTitle = Boolean(caption && caption.trim());
+  const flagLabel = live ? 'LIVE' : useClip ? 'LATEST CLIP' : 'LAST STREAM';
 
   return (
     <div className="stream-col">
       <div className="stream-frame">
-        <iframe
-          title="live stream"
-          src={src}
-          allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-          allowFullScreen
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }}
-        />
+        {useClip ? (
+          <video
+            className="stream-clip"
+            src={clip.video}
+            poster={clip.media || undefined}
+            autoPlay muted loop playsInline
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', border: 0 }}
+          />
+        ) : (
+          <iframe
+            title="live stream"
+            src={src}
+            allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+            allowFullScreen
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }}
+          />
+        )}
+
         <span className={`stream-status ${live ? 'on' : 'off'}`}>
           <span className="ss-dot" />{live ? 'LIVE' : 'OFFLINE'}
         </span>
@@ -60,11 +77,11 @@ export default function StreamFrame({ title, streamTitle = '', lastViews = 0, wa
       <p className="stream-caption">
         {hasTitle ? (
           <>
-            <span className={`cap-flag ${live ? 'live' : 'last'}`}>{live ? 'LIVE' : 'LAST STREAM'}</span>
+            <span className={`cap-flag ${live ? 'live' : 'last'}`}>{flagLabel}</span>
             <span className="cap-title">“{caption}”</span>
             <span className="cap-sep">·</span>
             <span className="cap-host">with {isBanks ? 'FaZeBanks' : 'Ansem'}</span>
-            {!live && lastViews ? <span className="cap-views">{fmtViews(lastViews)} views</span> : null}
+            {!live && !useClip && lastViews ? <span className="cap-views">{fmtViews(lastViews)} views</span> : null}
           </>
         ) : (
           <span className="cap-title cap-soon">The next livestream title will appear here when {isBanks ? 'FaZeBanks' : 'Ansem'} goes live</span>

@@ -150,6 +150,10 @@ function MainApp() {
     return () => clearInterval(id);
   }, [statuses]);
 
+  // Latest Market Bubble clip — bulletproof fallback for the stream window when
+  // nobody's live and no VOD resolved (so it never shows Twitch's offline page).
+  const latestClip = useMemo(() => (news || []).find((n) => n.video) || null, [news]);
+
   const banksMsgs = useMemo(() => feed.filter((m) => m.host === 'banks'), [feed]);
   const ansemMsgs = useMemo(() => feed.filter((m) => m.host === 'ansem'), [feed]);
   const allRate = useMemo(() => rateOf(feed), [feed]);
@@ -184,7 +188,7 @@ function MainApp() {
             </div>
 
             <div className="zone zone-center">
-              <StreamFrame title={STREAM_TITLE} streamTitle={statuses['banks:twitch']?.title} lastViews={statuses['banks:twitch']?.lastViews} watch="banks" live={statuses['banks:twitch']?.state === 'live'} videoId={statuses['banks:twitch']?.videoId} messages={feed} />
+              <StreamFrame title={STREAM_TITLE} streamTitle={statuses['banks:twitch']?.title} lastViews={statuses['banks:twitch']?.lastViews} watch="banks" live={statuses['banks:twitch']?.state === 'live'} videoId={statuses['banks:twitch']?.videoId} clip={latestClip} messages={feed} />
               <div className="stats-dock"><StatsStrip data={data} /></div>
             </div>
 
