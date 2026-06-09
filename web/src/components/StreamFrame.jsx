@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { userColor, hostColor, hostName } from '../data/mb.js';
 
 const PARENT = typeof location !== 'undefined' ? location.hostname : 'localhost';
@@ -16,11 +16,22 @@ function twitchSrc({ live, videoId }) {
 export default function StreamFrame({ title, streamTitle = '', lastViews = 0, watch = 'banks', live = false, videoId = null, clip = null, messages = [] }) {
   const isBanks = watch === 'banks';
   const [showChat, setShowChat] = useState(false);
+  const clipRef = useRef(null);
   const overlay = messages.slice(-10);
 
   // Show the clip only when there's no live stream and no resolvable VOD (e.g.
   // Twitch creds missing or no archive) — guarantees something always plays.
   const useClip = isBanks && !live && !videoId && Boolean(clip?.video);
+
+  // React's `muted` attribute on <video> is unreliable, so the browser can see
+  // it as unmuted and block autoplay (black frame). Force muted + play via ref.
+  useEffect(() => {
+    if (!useClip) return;
+    const v = clipRef.current;
+    if (!v) return;
+    v.muted = true;
+    v.play().catch(() => {});
+  }, [useClip, clip?.video]);
   const src = isBanks ? twitchSrc({ live, videoId }) : `https://player.kick.com/ansem?autoplay=true&muted=true`;
 
   const fmtViews = (n) => (n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(1)}K` : `${n}`);
@@ -33,10 +44,11 @@ export default function StreamFrame({ title, streamTitle = '', lastViews = 0, wa
       <div className="stream-frame">
         {useClip ? (
           <video
+            ref={clipRef}
             className="stream-clip"
             src={clip.video}
             poster={clip.media || undefined}
-            autoPlay muted loop playsInline
+            autoPlay muted loop playsInline preload="auto"
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', border: 0 }}
           />
         ) : (
