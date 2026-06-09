@@ -209,13 +209,14 @@ async function resolveStreams() {
     }
   }
 }
-if (twitchApiConfigured() || kickApiConfigured()) {
-  resolveStreams();
-  streamTimer = setInterval(resolveStreams, 30000);
-  console.log('[stream] resolver active (live / latest-VOD + viewers)');
-} else {
-  console.log('[stream] no app creds — window uses channel embed (live when live); add creds for VOD + real viewers');
-}
+// Always run the resolver — it no-ops per-source when creds are missing, and
+// re-checks every 30s, so it self-heals (no dependency on creds being present
+// at the exact moment of boot).
+resolveStreams();
+streamTimer = setInterval(resolveStreams, 30000);
+console.log(twitchApiConfigured() || kickApiConfigured()
+  ? '[stream] resolver active (live / latest-VOD + viewers)'
+  : '[stream] resolver idle — no app creds yet (set TWITCH_CLIENT_ID/SECRET)');
 
 // News feed — Market Bubble's own content API (real tweets + media + clips).
 // Polled every 60s so the dashboard reflects new posts within minutes.
