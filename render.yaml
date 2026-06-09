@@ -1,0 +1,32 @@
+# Render Blueprint — deploys the whole Market Bubble app (gateway serves the
+# built frontend AND hosts the /ws WebSocket). On Render: New → Blueprint →
+# connect this repo. Secret values (sync:false) are entered in the dashboard.
+services:
+  - type: web
+    name: market-bubble
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: node server/index.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      # Feed: "mock" = populated demo chat + demo viewers (good for recording);
+      # switch to "live" once Twitch/Kick creds are set and the show is on.
+      - key: FEED_MODE
+        value: mock
+      # Frontend (build-time): Google "Sign in with Google" client ID.
+      - key: VITE_GOOGLE_CLIENT_ID
+        sync: false
+      # Real data integrations — paste values in the Render dashboard.
+      - key: TWITCH_CLIENT_ID
+        sync: false
+      - key: TWITCH_CLIENT_SECRET
+        sync: false
+      - key: TWELVEDATA_KEY
+        sync: false
+      - key: KICK_CLIENT_ID
+        sync: false
+      - key: KICK_CLIENT_SECRET
+        sync: false

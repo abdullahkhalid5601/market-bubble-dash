@@ -15,7 +15,8 @@ import { getNews, newsConfigured } from './newsApi.js';
 import { getMarketData, stocksConfigured } from './marketApi.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const PORT = process.env.GATEWAY_PORT || 8787;
+// Render/Heroku-style hosts inject PORT; fall back to GATEWAY_PORT then 8787.
+const PORT = process.env.PORT || process.env.GATEWAY_PORT || 8787;
 let MODE = process.env.FEED_MODE || 'mock'; // mock | replay | live — switchable at runtime
 const DIST = path.join(__dirname, '..', 'dist');
 
