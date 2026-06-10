@@ -1,9 +1,28 @@
-# Market Bubble — Unified Chat Dashboard
+# Market Bubble — Unified Live Dashboard
 
-Real-time chat dashboard for the *Market Bubble* show (FaZe Banks + Ansem),
-simulcast across **Twitch, Kick, and X**. Every message is merged into one screen
-and tagged on **two axes** so each host instantly knows whose crowd it is and
-where it came from:
+## ▶︎ Live site → **https://market-bubble.onrender.com**
+
+> Hosted on Render's free tier — the first visit may take **~30–60s** to wake
+> the server, then it's instant. Use the **Home / Markets / Content** nav up top.
+
+One front page for the *Market Bubble* show (FaZe Banks + Ansem) that merges
+**Twitch + Kick + X** chat into a single live feed, alongside the **live stream**,
+a real **markets terminal**, and the Market Bubble **content** archive — styled
+like a *Wall Street Journal × Apple-designed newspaper* (squircle cards, Playfair
+masthead, evening + morning editions). Built for the **$10,000 Vibe Coded Chat
+Challenge**.
+
+**What's inside**
+
+- **Home** — unified chat (Twitch/Kick/X, scroll-to-pause like a native client) ·
+  the live stream / last-stream VOD playing in-window · live viewer + message stats.
+- **Markets** — TradingView ticker + heatmap with a Crypto ⇄ Stocks toggle ·
+  real CoinGecko + Twelve Data prices · live Polymarket prediction markets.
+- **Content** — a bento grid of Market Bubble tweets & clips; click any clip to
+  play it in an in-window liquid-glass video player.
+
+Every chat message is tagged on **two axes** so each host knows whose crowd it
+is and where it came from:
 
 - **Host** — Banks / Ansem
 - **Platform** — Twitch / Kick / X
