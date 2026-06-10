@@ -13,6 +13,7 @@ import { getTwitchStatus, getTwitchStream, twitchApiConfigured } from './twitchA
 import { getKickStatus, kickApiConfigured } from './kickApi.js';
 import { getNews, newsConfigured } from './newsApi.js';
 import { getMarketData, stocksConfigured } from './marketApi.js';
+import { getLatestVod } from './streamVideos.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Render/Heroku-style hosts inject PORT; fall back to GATEWAY_PORT then 8787.
@@ -218,6 +219,23 @@ console.log(twitchApiConfigured() || kickApiConfigured()
   ? '[stream] resolver active (live / latest-VOD + viewers)'
   : '[stream] resolver idle — no app creds yet (set TWITCH_CLIENT_ID/SECRET)');
 
+// Keyless VOD via Market Bubble's own API (how the official site plays the
+// stream). Always sets banks:twitch.videoId so the window plays the last VOD
+// even when our own Twitch resolver can't reach Helix. Refreshed every 5 min.
+let vodTimer = null;
+async function pollVod() {
+  const v = await getLatestVod('fazebanks');
+  if (!v) return;
+  const id = 'banks:twitch';
+  const cur = statuses[id] || {};
+  // Don't clobber a genuine live state; just guarantee a videoId + title/views.
+  statuses[id] = { ...cur, videoId: cur.state === 'live' ? cur.videoId : v.videoId, title: cur.title || v.title, lastViews: cur.lastViews || v.lastViews };
+  emitStatus(id);
+}
+pollVod();
+vodTimer = setInterval(pollVod, 5 * 60 * 1000);
+console.log('[stream] keyless VOD feed active (marketbubble.vercel.app)');
+
 // News feed — Market Bubble's own content API (real tweets + media + clips).
 // Polled every 60s so the dashboard reflects new posts within minutes.
 let newsTimer = null;
@@ -246,6 +264,7 @@ server.listen(PORT, () => {
 function shutdown() {
   teardown();
   clearInterval(streamTimer);
+  clearInterval(vodTimer);
   clearInterval(newsTimer);
   clearInterval(marketTimer);
   recorder?.close();
