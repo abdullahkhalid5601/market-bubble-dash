@@ -62,14 +62,18 @@ export default function SignIn({ onClose, onSignIn }) {
         <p className="signin-sub">You’re watching on marketbubble.com — sign in to chat in the shared live room.</p>
 
         {configured ? (
-          <div className="gbtn-wrap" ref={btnRef} />
+          <>
+            <div className="gbtn-wrap" ref={btnRef} />
+            <div className="signin-divider"><span>or</span></div>
+          </>
         ) : (
-          <form onSubmit={submit}>
-            <p className="signin-note">Add <code>VITE_GOOGLE_CLIENT_ID</code> to <code>web/.env</code> to turn on “Sign in with Google.” For now, pick a display name:</p>
-            <input className="signin-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="your display name" autoFocus maxLength={24} />
-            <button type="submit" className="signin-go" disabled={!name.trim()}>Enter chat</button>
-          </form>
+          <p className="signin-note">Pick a display name to jump into the chat:</p>
         )}
+
+        <form onSubmit={submit}>
+          <input className="signin-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="enter a display name" maxLength={24} autoFocus={!configured} />
+          <button type="submit" className="signin-go" disabled={!name.trim()}>Enter chat</button>
+        </form>
       </div>
     </div>
   );

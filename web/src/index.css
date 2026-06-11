@@ -1393,6 +1393,12 @@ html[data-edition='morning'] .signin-logo { filter: invert(1); }
 .signin-note { font-family: var(--font-sans); font-size: 12px; line-height: 1.5; color: var(--ink-faint); margin: 0 0 12px; }
 .signin-note code { font-family: var(--font-mono); font-size: 11px; color: var(--ink-dim); }
 .gbtn-wrap { display: flex; justify-content: center; min-height: 44px; }
+.signin-divider {
+  display: flex; align-items: center; gap: 10px; margin: 15px 0 5px;
+  color: var(--ink-faint); font-family: var(--font-mono); font-size: 11px;
+  letter-spacing: 0.1em; text-transform: uppercase;
+}
+.signin-divider::before, .signin-divider::after { content: ''; flex: 1; height: 1px; background: var(--rule); }
 .signin-title { font-family: var(--font-display); font-size: 25px; font-weight: 800; color: var(--ink-strong); text-align: center; }
 .signin-card { text-align: center; }
 .signin-sub { font-family: var(--font-sans); font-size: 13px; line-height: 1.5; color: var(--ink-dim); margin: 8px 0 18px; }
