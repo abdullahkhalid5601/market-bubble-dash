@@ -10,6 +10,7 @@ import MarketBubbleLogo from './components/MarketBubbleLogo.jsx';
 import SignIn from './components/SignIn.jsx';
 import { NewsGridSkeleton, MarketsSkeleton } from './components/Skeletons.jsx';
 import { FullscreenIcon, PopoutIcon } from './components/logos.jsx';
+import ObsApp from './components/ObsOverlay.jsx';
 
 // Markets + Content are split out so the home page ships a smaller, faster
 // initial bundle (TradingView widgets + the clip player load on demand).
@@ -19,6 +20,10 @@ const NewsPage = lazy(() => import('./components/NewsPage.jsx'));
 const STREAM_TITLE = 'Let’s Talk About View Botting';
 const IS_POPOUT = typeof location !== 'undefined' && location.hash === '#popout';
 const IS_OVERLAY = typeof location !== 'undefined' && location.hash === '#overlay';
+// OBS browser sources: /obs/chat · /obs/news · /obs/polymarket
+const OBS_KIND = typeof location !== 'undefined' && location.pathname.startsWith('/obs/')
+  ? location.pathname.slice(5).replace(/\/+$/, '').toLowerCase()
+  : null;
 const dateline = () =>
   new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase();
 const rateOf = (arr) => arr.filter((m) => (m.recvAt || m.ts) > Date.now() - 60000).length;
@@ -212,6 +217,7 @@ function MainApp() {
 }
 
 export default function App() {
+  if (OBS_KIND) return <ObsApp kind={OBS_KIND} />;
   if (IS_OVERLAY) return <OverlayApp />;
   if (IS_POPOUT) return <PopoutApp />;
   return <MainApp />;

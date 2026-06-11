@@ -113,6 +113,50 @@ network dependency.
 
 ---
 
+## OBS Overlays
+
+Market Bubble ships **OBS-ready browser-source pages** for stream scenes. They
+reuse the same live gateway feed as the Watch dashboard (chat, content, and
+Polymarket), but render as **transparent overlay surfaces** with no site
+navigation or stream popout — drop them straight into OBS as Browser Sources.
+
+Use these URLs as OBS browser sources:
+
+```
+https://market-bubble.onrender.com/obs/chat?source=both
+https://market-bubble.onrender.com/obs/news?limit=8
+https://market-bubble.onrender.com/obs/polymarket?limit=6
+```
+
+Local development URLs:
+
+```
+http://localhost:5173/obs/chat?source=both
+http://localhost:5173/obs/news?limit=8
+http://localhost:5173/obs/polymarket?limit=6
+```
+
+**Overlay options**
+
+- `source=banks`, `source=ansem`, or `source=both` switches which host's crowd
+  the **chat** overlay shows (default `both`).
+- `platforms=twitch,kick,x` filters the chat overlay by platform. Use any
+  comma-separated subset, e.g. `platforms=twitch,kick`.
+- `limit=12` changes the number of chat messages, content cards, or market cards.
+- `mock=1` streams client-side sample chat for laying out a scene quickly (chat
+  overlay only).
+- `framed=0` removes the glass panel behind the **content** and **Polymarket**
+  overlays (bare transparent cards).
+
+**Recommended OBS setup**
+
+- Add each overlay as a **Browser Source**.
+- Enable **transparent background** (these pages render with no background).
+- Use `1920x1080` for full-scene overlays, or a smaller custom width for side rails.
+- Crop and scale the source in OBS rather than editing the app for every scene.
+
+---
+
 ## Platform notes
 
 - **Twitch (Banks)** — anonymous IRC over WebSocket. Real-time, free, no auth.
