@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+// .trim() guards against stray spaces/newlines pasted into the env var (a
+// space anywhere makes Google reject the id as invalid_client / "client not found").
+const GOOGLE_CLIENT_ID = (import.meta.env.VITE_GOOGLE_CLIENT_ID || '').trim();
 
 // Decode the profile out of a Google ID-token JWT (no library needed).
 function decodeJwt(token) {
