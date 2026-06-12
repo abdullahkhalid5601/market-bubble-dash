@@ -194,8 +194,8 @@ html[data-edition='morning'] {
    ============================================================ */
 .front {
   display: grid;
-  grid-template-columns: 364px minmax(0, 1fr) 288px;
-  gap: 34px;
+  grid-template-columns: 316px minmax(0, 1fr) 264px;
+  gap: 28px;
   padding: 16px 0 14px;
   min-height: 0;
   position: relative;
@@ -384,7 +384,7 @@ html[data-edition='morning'] {
 }
 .stream-frame {
   position: relative;
-  width: 100%; max-width: 1100px;
+  width: 100%; max-width: 1200px;
   aspect-ratio: 16/9;
   background: #000;
   border-radius: var(--radius);
@@ -1010,9 +1010,67 @@ body.overlay-body { background: transparent; }
   animation: briefIn 360ms var(--ease-out);
 }
 .sco-rail { position: absolute; left: 0; top: 3px; bottom: 3px; width: 2px; border-radius: 2px; }
+.sco-plat { display: inline-flex; align-items: center; vertical-align: -2px; margin-right: 6px; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.8)); }
 .sco-user { font-weight: 700; margin-right: 6px; }
 .sco-host { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; margin-right: 7px; }
 .sco-text { font-weight: 500; }
+
+/* ---- full-size (theater) toggle, top-left ---- */
+.stream-fs-toggle {
+  position: absolute; top: 14px; left: 16px; z-index: 8;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; border: 1px solid rgba(255,255,255,0.14); border-radius: 99px;
+  background: rgba(12,12,14,0.82); color: #fff; cursor: pointer;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.55);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  transition: background-color 160ms var(--ease-out), transform 140ms var(--ease-spring);
+}
+.stream-fs-toggle:hover { background: rgba(30,30,34,0.92); }
+.stream-fs-toggle:active { transform: scale(0.92); }
+.stream-fs-toggle:focus { outline: none; }
+.stream-fs-toggle:focus-visible { box-shadow: 0 0 0 2px rgba(255,255,255,0.45), 0 3px 12px rgba(0,0,0,0.55); }
+
+/* ============================================================
+   THEATER MODE — stream fills the screen, chat floats on the LEFT
+   ============================================================ */
+.stream-col.is-fs {
+  position: fixed; inset: 0; z-index: 50;
+  gap: 0; padding: 20px; background: #101012;
+  align-items: center; justify-content: center;
+  animation: fadeIn 220ms var(--ease-out);
+}
+.stream-col.is-fs .stream-frame {
+  flex: 1; width: 100%; max-width: none;
+  aspect-ratio: auto; border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.stream-col.is-fs .stream-caption { display: none; }
+
+/* compact chat block, anchored UPPER-LEFT (doesn't eat the screen) */
+.stream-col.is-fs .stream-chat-overlay {
+  left: 0; right: auto; top: 74px; bottom: auto;
+  width: 26%; min-width: 290px; max-width: 380px; max-height: 44%;
+  padding: 0 14px 0 22px; gap: 6px; overflow: hidden;
+}
+/* soft left scrim so chat stays legible over a bright stream */
+.stream-col.is-fs .stream-chat-overlay::before {
+  content: ''; position: absolute; inset: -14px -36px -14px -22px; z-index: -1;
+  background: linear-gradient(90deg, rgba(0,0,0,0.42) 0%, rgba(0,0,0,0.18) 55%, transparent 100%);
+  pointer-events: none;
+}
+.stream-col.is-fs .sco-line { font-size: 15px; line-height: 1.3; }
+.stream-col.is-fs .sco-host { font-size: 9px; margin-right: 6px; }
+.stream-col.is-fs .sco-plat { vertical-align: -2px; }
+
+/* flag + title chip, top-center, in theater mode */
+.stream-fs-cap {
+  position: absolute; top: 14px; left: 50%; transform: translateX(-50%); z-index: 6;
+  max-width: 56%; padding: 6px 14px; border-radius: 99px;
+  background: rgba(20,20,24,0.55); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  color: rgba(255,255,255,0.92); font-family: var(--font-mono); font-size: 11px;
+  letter-spacing: 0.04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+}
 
 /* ============================================================
    SITE NAV + PAGES (Home / Markets / News) — newspaper style
@@ -1426,17 +1484,15 @@ html[data-edition='morning'] .signin-logo { filter: invert(1); }
 
 /* Stream LIVE / OFFLINE status badge */
 .stream-status {
-  position: absolute; top: 12px; left: 14px; z-index: 6;
+  position: absolute; top: 14px; right: 18px; z-index: 8;
   display: inline-flex; align-items: center; gap: 7px;
-  padding: 5px 11px; border-radius: 99px;
-  font-family: var(--font-sans); font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
-  background: rgba(20,20,24,0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  font-family: var(--font-sans); font-size: 14px; font-weight: 600; letter-spacing: 0.01em;
+  text-shadow: 0 1px 5px rgba(0,0,0,0.7);
 }
-.stream-status.on { color: #ff4d4d; }
-.stream-status.off { color: var(--ink-dim); }
+.stream-status.on { color: #3ddc84; }
+.stream-status.off { color: #ff5a5a; }
 .stream-status .ss-dot { width: 7px; height: 7px; border-radius: 50%; }
-.stream-status.on .ss-dot { background: #ff4d4d; animation: pulse 1.6s ease-in-out infinite; }
-.stream-status.off .ss-dot { background: var(--ink-faint); }
+.stream-status.on .ss-dot { background: #3ddc84; box-shadow: 0 0 7px #3ddc84; animation: pulse 1.6s ease-in-out infinite; }
 
 /* ============================================================
    MARKETS TERMINAL — Global Markets · Narrative · Smart Money
